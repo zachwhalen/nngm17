@@ -229,5 +229,31 @@ def prepare():
         
         chapter = next_concept + chapter
         
+def get_icons(keyword):
+    
+    # first check the cache
+    if (os.path.isfile("icons/" + keyword + ".json")):
+        #print "Loading from file"
+        # proceed to load it from file
         
+        icon_file = open("icons/" + keyword + ".json").read()
+        icons = json.loads(icon_file)
+        #icon_file.close()
+        
+    else:
+        #print "Getting from API"
+        # set up nounproject auth
+        auth = OAuth1("da866a7951e24154b918294bd9223304", "072eca50d5dc47d3a98375e6ef54a434")
+
+        # the api endpoint
+        endpoint = "http://api.thenounproject.com/icons/{}".format(keyword)
+
+        response = requests.get(endpoint, auth=auth)
+        
+        icons = response.json()
+        
+        with open("icons/" + keyword + ".json","w") as outfile:
+            json.dump(data, outfile)
+        
+    return icons        
         
