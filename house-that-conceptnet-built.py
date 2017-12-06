@@ -256,4 +256,21 @@ def get_icons(keyword):
             json.dump(data, outfile)
         
     return icons        
-        
+
+def get_flickr_image(keyword):
+    
+    api_key = u'7cc80add2cd96da6fca533e9eeb815b4'
+    api_secret = u'79826baa9f006ad3'
+
+    flickr = flickrapi.FlickrAPI(api_key, api_secret,format="parsed-json")
+    photos = flickr.photos.search(text=keyword,license='4,5,9,10',sort="relevance",per_page='40')
+    photo = random.choice(photos['photos']['photo'])
+    fullsize = flickr.photos.getSizes(photo_id=photo['id'])['sizes']['size'][-1]['source']
+    fn = fullsize.split("/")[-1]
+    iid = fn.split(".")[0]
+    new_fn = fn.split(".")[0] + "-watercolor.jpg"
+    
+    os.system("wget -P images " + fullsize)
+    
+    os.system("./watercolor -s 25 -e 5 -m 50 -c 0 images/" + fn + " images/" + new_fn)
+    return new_fn
