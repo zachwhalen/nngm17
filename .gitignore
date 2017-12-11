@@ -1,6 +1,10 @@
 
 *.ipynb
 pages/*
+icons/*
+images/*
+pdfs/*
+
 house.jpg
 
 house.json
@@ -17,6 +21,6 @@ out.jpg
 
 watercolor
 
-images/187943195_05de9fe99b_o-50.jpg
-images/*
-pdfs/*
+
+
+credentials
