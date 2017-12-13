@@ -406,3 +406,191 @@ def book_title ():
     people = list(credits['characters'])
     people[-1] = "and " + people[-1]
     return "The " + quantify("house",amount=len(credits['chapter_titles'])) + " of " + ", ".join(people)
+
+def prepare_chapter(content,startpage,chapter_number):
+    
+    global credits
+    
+    
+    print content
+    # put the list from stack() in reverse
+    ordered = list(content[::-1])
+    
+    # this will hold the chapter text as it accumulates
+    chapter = ''
+    
+    # this chooses a color palette for this chapter
+    colors = pal()
+       
+    # pick a name for our main character
+    jack = random.choice(pycorpora.get_file("humans","firstnames")['firstNames'])
+    credits['characters'].append(jack)
+    
+    # get an image for this character
+    jack_icon = get_icon(jack,random.choice(colors),random.choice(["man","girl","boy","woman"]))
+    
+    # chapter object 
+    chapter_object = content[0]
+
+    
+    # make a chapter title
+    # this will make a title for the chapter
+    chapter_title = str( jack + 
+                        " and the " + 
+                        str(chapter_object) + 
+                        " that " + 
+                        a(specify(pastify(content[1][0]))) )
+    
+    credits['chapter_titles'].append((chapter_title, startpage + 3))
+    # loop through each concept in the stack
+    for page in range(len(ordered)):
+        
+        print "Working on page " + str(page)
+        
+        
+        # the page number
+        page_number = str( startpage + ((page * 2) + 2) )
+        
+        # a color for this concept
+        color = random.choice(colors)
+        
+        # I don't remember what this does but it's probably important later
+        if (page == len(ordered) - 1):            
+            the_concept = chapter_object
+        else:
+            the_concept = pastify(specify(ordered[page][0]))
+            
+            
+        # isolate the current object
+        the_thing = the_concept.split(" the ")[-1]
+        
+        # find an icon. This returns an <img> tag for the icon
+        the_icon = get_icon(the_thing,color)
+            
+        if (page == 0): # at the beginning of the chapter
+            
+            
+            # make the blank page
+            tpl("templates/template.html", "pages/" + str(startpage).zfill(5) + "l.html",[])
+            
+            # make the chapter title page 
+            print "Making the title page "
+            tpl("templates/chaptertitlepage.html",
+                "pages/" + str(startpage + 1).zfill(5) + "r.html",
+                [("chapter_number",str(chapter_number)),("chapter_title",chapter_title),("character_name",jack),("character_icon",str(jack_icon))])
+
+            next_concept = ""
+            # start the chapter string
+            chapter = "that " + jack + " " + random.choice(["built.","built of brick.","divided into several rooms.","found in a neighborhood.","located on an estate."])
+        else:
+            # I don't know why this is going backwards?
+            next_concept = "<span> that " + pastify(specify(ordered[page - 1][0])).split(" the ")[0] + " the </span>"
+    
+        page_content = [
+            ("pn",page_number),
+            ("chapter_content",chapter),
+            ("icon",the_icon),
+            ("first_line","This is the <span class='page-object' style='color:#" + color + "'>" + the_thing + "</span>" + next_concept)      
+        ]
+        
+        tpl("templates/template.html","pages/" + page_number.zfill(5) + "l.html",page_content)
+        
+        
+        if (page == 0):           
+            if (not os.path.isfile("images/house-" + str(chapter_number) + "-watercolor.jpg")):
+                get_flickr_image("house",chapter_number)
+                
+            tpl("templates/rtemplate.html","pages/" + str(int(page_number) + 1).zfill(5) + "r.html",[("imagery",jack_icon + "<!-- imagery -->"),("pgbackground","<div class='pg' style='background-image: url(../images/house-" + str(chapter_number) + "-watercolor.jpg)'>")])
+        elif (page >= 1):
+            tpl ("pages/" + str(int(page_number) - 1).zfill(5) + "r.html",  "pages/" + str(int(page_number) + 1).zfill(5) + "r.html",[("imagery",the_icon + "<!-- imagery -->")])
+        
+        # prepend the next_concept variable to the chapter text before it loops again
+        chapter = "<span class='page-object' style='color:#" + color + "'>" + the_thing + "</span>" + next_concept + chapter
+        #raw_txt = str(chapter)
+        raw_txt = re.sub('<[^<]+?>', '', chapter)
+        credits['raw_txt'] += " " + raw_txt
+        
+    return page_number
+        
+def assemble():
+    # actually make the thing
+    global credits
+    credits = {
+        'nouns':[],
+        'houses':[],
+        'characters':[],
+        'concepts':[],
+        'raw_txt':'',
+        'chapter_count':2,
+        'chapter_titles':[]
+    }
+    
+
+    page_counter = 6
+    # first, make the chapters
+    animals = pycorpora.get_file("animals","common")['animals']
+    
+    for chapter_counter in range(credits['chapter_count']):
+        result = 0
+        while (result == 0):
+            animal = random.randrange(0,len(animals))
+            result = stack(animals[animal], 4)
+            del animals[animal]
+            
+        
+        a_chapter = prepare_chapter(result,int(page_counter) + 2,int(chapter_counter) + 1)
+        page_counter = a_chapter
+        
+        # to make a chapter
+        
+        # pick an animal to stack
+        
+        # make sure it created a valid set
+        
+        # prepare_chapter should return a number, the next chapter should start two pages after, so 10 + 2 = 12, e.g.
+        
+        
+    # prepare the frontmatter
+    # 1r = frontcover
+    # 2l = blank
+    # 3r = title page
+    # 4l = dedication
+    # 5r = toc
+    # 6l = blank
+    # 7r = introduction
+    # 8l = blank, chapter 1 page 0
+    
+    booktitle = book_title()
+    print "This book is called " + booktitle
+    
+    tpl("templates/frontcover.html","pages/00001r.html",[("book_title",booktitle)])
+    
+    # blank page
+    tpl("templates/template.html","pages/00002l.html",[("","")])
+    
+    # title page
+    tpl("templates/titlepage.html","pages/00003r.html",[("book_title",booktitle)])
+    
+    # dedication page
+    tpl("templates/dedication.html","pages/00004l.html",[("","")])
+    
+    # toc -- this one has to be a bit more manual
+    toc = ''
+    for ch in range(len(credits['chapter_titles'])):
+        toc_string = '<div class="toc-entry"><span>Chapter ' + str(ch + 1) + '</span><span>' + credits['chapter_titles'][ch][0] + '</span><span>' + str(credits['chapter_titles'][ch][1] - 2) + '</span></div>'                  
+        toc += toc_string
+        
+    toc += '<div class="toc-entry"><span>Credits</span><span>' + str(page_counter) + '</span></div>'
+    tpl("templates/toc.html","pages/00005r.html",[("toc",toc)])
+    
+    # blank page
+    tpl("templates/template.html","pages/00006l.html",[("","")])
+     
+    # introduction
+    housecount = quantify("house",amount=len(credits['chapter_titles']))
+    peoplecount = quantify("person",amount=len(credits['characters']))
+    
+    tpl("templates/preface.html","pages/00007r.html",[("house_count",housecount),("people_count",peoplecount),("character_names", ", ".join(list(credits['characters']))),("word_count",str(len(re.compile(r" +").split(credits['raw_txt']))))])
+    
+    print "Generation complete"
+
