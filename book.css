@@ -16,7 +16,7 @@ body {
  	position: absolute;
  	width: 7.25in;
  	height: 7.5in;
- 	top: 1.25in;
+ 	top: 2.25in;
  	left: .75in;
  	font-family: Florentia;
  	text-align: left;
@@ -89,3 +89,5 @@ body.chapter-title * {
  	width:6in;
  	margin: 0 auto;
  }
+
+  

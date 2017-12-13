@@ -14,12 +14,28 @@ from textblob import TextBlob
 from textblob.tokenizers import SentenceTokenizer
 
 from pattern.en import conjugate, lemma, lexeme
-from pattern.en import tenses, PAST, PL, parse, pluralize, singularize
+from pattern.en import tenses, PAST, PL, parse, pluralize, singularize, quantify
 
 import pdfkit
 
 from PIL import Image
 concept_cache = {}
+credits = {
+        'nouns':[],
+        'houses':[],
+        'characters':[],
+        'concepts':[],
+        'raw_txt':'',
+        'chapter_count':2,
+        'chapter_titles':[]
+    }
+
+def contrib(sources):
+    contributors = []
+    for c in sources:
+        contributors.append(c['contributor'].split("/")[-1])
+    return contributors
+
 def pal():
     palettes = [
         ["cf3e27","0d8a89","066598","ff9800","e68900"],
@@ -127,7 +143,8 @@ def get_some(word,rel,direction,number):
             #end = simpler(thing['end']['label']).lower()
 
             if (simpler(word) not in directions):
-                things.append(directions)
+                contributors = contrib(thing['sources'])
+                things.append((directions,contributors)) # make this a tuple
         
         concept_cache[word] = things
         
@@ -147,7 +164,7 @@ def stack(seed,depth):
             
             # get some actions
             for act in actions:
-                blob = TextBlob(seed + " can " + act)
+                blob = TextBlob(seed + " can " + act[0]) # adjust for tuple here
       
                 # make sure that there's a verb besides "is"
                 pos = []
@@ -157,7 +174,7 @@ def stack(seed,depth):
                 
                 if (re.match(blob.tags[-1][1],"NN") and "VB" in pos):
                     # print "Adding " + act
-                    db.append([act])
+                    db.append([act]) 
             #print db
         else:
         
@@ -170,14 +187,14 @@ def stack(seed,depth):
                 thread = db[s][d - 1]
                 #print "Working on " + str(thread)
                 
-                seed = thread.split(" ")[-1]
+                seed = thread[0].split(" ")[-1]
  
                 new_tails = []
       
                 if (len(seed) > 0 and seed not in 'house'):
                     actions = get_some(seed,"CapableOf","end","1000")
                     for act in actions:
-                        blob = TextBlob(seed + " can " + act)
+                        blob = TextBlob(seed + " can " + act[0]) # adjust for tuple here
                         pos = []
                         for w in blob.tags:
                             if (not re.match("be",lemma(w[0]))):
@@ -213,15 +230,17 @@ def stack(seed,depth):
         cull = []
         
         for c in range(len(db)):
-            
-            # save any that end in houses
-            if ("house" in db[c][-1].split(" ")[-1]):
-                completed.append(db[c])
+            if (len(db[c][-1]) > 0):
+                # save any that end in houses
+                if ("house" in db[c][-1][0].split(" ")[-1]):
+                    completed.append(db[c])
+                    cull.append(c)
+            else:
                 cull.append(c)
-            
-            # trim out any that have died
-            if (len(db[c][-1].split(" ")[-1]) is 0):
-                cull.append(c)
+
+#             # trim out any that have died
+#             if (len(db[c][-1][0].split(" ")[-1]) is 0):
+#                 cull.append(c)
             
            
         db = [v for i, v in enumerate(db) if i not in cull]
@@ -238,9 +257,16 @@ def stack(seed,depth):
         print "After cleanup, db is at " + str(len(db))
     
     # pick one of the longest complete chains, prepend the seed, and return 
-    content = completed[-1]
-    content.insert(0,str(og))
-    return content
+    if (len(db) > 0 and len(completed) > 0):
+        content = completed[-1]
+
+        # add to the credits here with information from tuple
+        for c in content:
+            credits['concepts'].append(c[1])
+        content.insert(0,str(og))
+        return content
+    else:
+        return 0
 
 def get_icons(noun,fallback):
     save_as = ""
@@ -301,7 +327,7 @@ def get_icons(noun,fallback):
 
 def get_flickr_image(keyword,chapter_number):
     
-    new_fn = 'images/' + keyword + '-' + chapter_number + '-watercolor.jpg'
+    new_fn = 'images/' + keyword + '-' + str(chapter_number) + '-watercolor.jpg'
     if (not os.path.isfile(new_fn)):
     
         credentials = cred()
@@ -311,6 +337,9 @@ def get_flickr_image(keyword,chapter_number):
         flickr = flickrapi.FlickrAPI(api_key, api_secret,format="parsed-json")
         photos = flickr.photos.search(text=keyword,license='4,5,9,10',sort="relevance",per_page='300')
         photo = random.choice(photos['photos']['photo'])
+        license = flickr.photos.getInfo(photo_id=photo['id'])['photo']['license']
+        owner = flickr.photos.getInfo(photo_id=photo['id'])['photo']['owner']['username']
+        credits['houses'].append((photo['id'],license,owner))
         fullsize = flickr.photos.getSizes(photo_id=photo['id'])['sizes']['size'][-1]['source']
         fn = fullsize.split("/")[-1]
         iid = fn.split(".")[0]
@@ -324,6 +353,7 @@ def get_flickr_image(keyword,chapter_number):
     return new_fn
 
 def get_icon(keyword,color,fallback="thing"):
+    global credits
     icons = get_icons(keyword,fallback)
     #print icons
     
@@ -334,6 +364,8 @@ def get_icon(keyword,color,fallback="thing"):
         if ("attribution_preview_url" in icon):
             print "has png"
             icon_url = icon['attribution_preview_url']
+            
+            credits['nouns'].append((icon['id'],icon['attribution']))
             
             # do I already have this one?
             if (not os.path.isfile("images/" + icon['id'] + ".png")):
@@ -353,9 +385,9 @@ def get_icon(keyword,color,fallback="thing"):
                 print "coloring the icon "
                 os.system("convert images/" + icon['id'] + ".png " + "-fuzz 100% -fill \"#" + color + "\" -opaque black " + color_fn)
     
-    top = "%.1f" % random.uniform(0,7.0)
-    left = "%.1f" % random.uniform(0.5,7.0)
-    width = "%.1f" % random.uniform(0.2,6.3)
+    top = "%.1f" % random.uniform(-0.5,7.0)
+    left = "%.1f" % random.uniform(-0.5,7.0)
+    width = "%.1f" % random.uniform(0.2,2.8)
     rotation = "%.1fdeg" % random.uniform(-30,30)
     
     position = "top:" + top + "in;" + "left:" + left + "in;"
@@ -368,4 +400,9 @@ def a(phrase):
     else:
         new_phrase = phrase.replace(" the ", " a ")
     return new_phrase
-    
+
+def book_title ():
+    global credits
+    people = list(credits['characters'])
+    people[-1] = "and " + people[-1]
+    return "The " + quantify("house",amount=len(credits['chapter_titles'])) + " of " + ", ".join(people)
