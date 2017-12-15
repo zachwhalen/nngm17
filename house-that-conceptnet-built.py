@@ -16,7 +16,7 @@ from textblob.tokenizers import SentenceTokenizer
 from pattern.en import conjugate, lemma, lexeme
 from pattern.en import tenses, PAST, PL, parse, pluralize, singularize, quantify
 
-import pdfkit
+from weasyprint import HTML
 
 from PIL import Image
 concept_cache = {}
@@ -39,7 +39,7 @@ def contrib(sources):
 def pal():
     palettes = [
         ["cf3e27","0d8a89","066598","ff9800","e68900"],
-        ["25CAF7","BEF272","F8FA68","F89573","F44750"],
+        ["25CAF7","BEF272","f9fa96","F89573","F44750"],
         ["EA9155","EFB53A","C54400","B0946F","5D443F"],
         ["820434","C84622","F6871E","F3B778","2D132E"],
         ["1E2C45","A1531B","D9B32B","A11B1B","250433"]
@@ -94,6 +94,8 @@ def pastify(phrase):
                 fixed += "lost "
             elif ("lie" in w[0]):
                 fixed += "lay "
+            elif ("bite" in w[0]):
+                fixed += "bit "
             else:
                 fixed += conjugate(w[0],tense=PAST) + " "
             found = 1
@@ -337,9 +339,16 @@ def get_flickr_image(keyword,chapter_number):
         flickr = flickrapi.FlickrAPI(api_key, api_secret,format="parsed-json")
         photos = flickr.photos.search(text=keyword,license='4,5,9,10',sort="relevance",per_page='300')
         photo = random.choice(photos['photos']['photo'])
-        license = flickr.photos.getInfo(photo_id=photo['id'])['photo']['license']
-        owner = flickr.photos.getInfo(photo_id=photo['id'])['photo']['owner']['username']
-        credits['houses'].append((photo['id'],license,owner))
+        photo_info = flickr.photos.getInfo(photo_id=photo['id'])
+        #license = flickr.photos.getInfo(photo_id=photo['id'])['photo']['license']
+        #owner = flickr.photos.getInfo(photo_id=photo['id'])['photo']['owner']['username']
+        print photo_info
+        if(len(photo_info['photo']['owner']['realname']) > 0):
+            photog = photo_info['photo']['owner']['realname']
+        else:
+            photog = photo_info['photo']['owner']['username']
+        
+        credits['houses'].append((photo['id'],photo_info['photo']['license'],photog,photo_info['photo']['title']['_content'],photo_info['photo']['urls']['url'][0]['_content']))
         fullsize = flickr.photos.getSizes(photo_id=photo['id'])['sizes']['size'][-1]['source']
         fn = fullsize.split("/")[-1]
         iid = fn.split(".")[0]
@@ -396,9 +405,10 @@ def get_icon(keyword,color,fallback="thing"):
 
 def a(phrase):
     if (re.search(r" the [aeiou]",phrase)):
-        new_phrase = phrase.replace(" the ", " an ")
+        new_phrase = phrase.replace(" the ", " an ").replace(" for an "," for ")
     else:
-        new_phrase = phrase.replace(" the ", " a ")
+        new_phrase = phrase.replace(" the ", " a ").replace(" for a "," for ").replace(" a water"," water")
+        
     return new_phrase
 
 def book_title ():
@@ -406,7 +416,7 @@ def book_title ():
     people = list(credits['characters'])
     people[-1] = "and " + people[-1]
     return "The " + quantify("house",amount=len(credits['chapter_titles'])) + " of " + ", ".join(people)
-
+    
 def prepare_chapter(content,startpage,chapter_number):
     
     global credits
@@ -427,7 +437,7 @@ def prepare_chapter(content,startpage,chapter_number):
     credits['characters'].append(jack)
     
     # get an image for this character
-    jack_icon = get_icon(jack,random.choice(colors),random.choice(["man","girl","boy","woman"]))
+    jack_icon = get_icon(jack,random.choice(colors),random.choice(["man","girl","boy","woman","baby","child","grandmother","dude"]))
     
     # chapter object 
     chapter_object = content[0]
@@ -487,7 +497,7 @@ def prepare_chapter(content,startpage,chapter_number):
             next_concept = "<span> that " + pastify(specify(ordered[page - 1][0])).split(" the ")[0] + " the </span>"
     
         page_content = [
-            ("pn",page_number),
+            ("pn",str(int(page_number) - 6)),
             ("chapter_content",chapter),
             ("icon",the_icon),
             ("first_line","This is the <span class='page-object' style='color:#" + color + "'>" + the_thing + "</span>" + next_concept)      
@@ -508,7 +518,7 @@ def prepare_chapter(content,startpage,chapter_number):
         chapter = "<span class='page-object' style='color:#" + color + "'>" + the_thing + "</span>" + next_concept + chapter
         #raw_txt = str(chapter)
         raw_txt = re.sub('<[^<]+?>', '', chapter)
-        credits['raw_txt'] += " " + raw_txt
+        credits['raw_txt'] += " This is the " + raw_txt
         
     return page_number
         
@@ -521,7 +531,7 @@ def assemble():
         'characters':[],
         'concepts':[],
         'raw_txt':'',
-        'chapter_count':2,
+        'chapter_count':7,
         'chapter_titles':[]
     }
     
@@ -534,7 +544,7 @@ def assemble():
         result = 0
         while (result == 0):
             animal = random.randrange(0,len(animals))
-            result = stack(animals[animal], 4)
+            result = stack(animals[animal], 55)
             del animals[animal]
             
         
@@ -577,10 +587,10 @@ def assemble():
     # toc -- this one has to be a bit more manual
     toc = ''
     for ch in range(len(credits['chapter_titles'])):
-        toc_string = '<div class="toc-entry"><span>Chapter ' + str(ch + 1) + '</span><span>' + credits['chapter_titles'][ch][0] + '</span><span>' + str(credits['chapter_titles'][ch][1] - 2) + '</span></div>'                  
+        toc_string = '<div class="toc-entry"><span>Chapter ' + str(ch + 1) + '</span><span>' + credits['chapter_titles'][ch][0] + '</span><span>' + str(credits['chapter_titles'][ch][1] - 8) + '</span></div>'                  
         toc += toc_string
         
-    toc += '<div class="toc-entry"><span>Credits</span><span>' + str(page_counter) + '</span></div>'
+    toc += '<div class="toc-entry"><span>&nbsp;</span><span>Credits</span><span>' + str(int(page_counter) - 3) + '</span></div>'
     tpl("templates/toc.html","pages/00005r.html",[("toc",toc)])
     
     # blank page
@@ -592,5 +602,90 @@ def assemble():
     
     tpl("templates/preface.html","pages/00007r.html",[("house_count",housecount),("people_count",peoplecount),("character_names", ", ".join(list(credits['characters']))),("word_count",str(len(re.compile(r" +").split(credits['raw_txt']))))])
     
+    # make the credits
+    make_credits(credits,page_counter)
+    
     print "Generation complete"
 
+def make_credits(credits,page_number):
+    
+    # actually first make a blank verso page
+    tpl("templates/credits.html","pages/" + str(int(page_number) + 2).zfill(5) + ".html",[("","")])
+    
+    
+    license = {
+        '4': 'CC BY',
+        '5': 'CC BY-SA',
+        '9': 'CC 0',
+        '10': 'Public Domain'
+    }
+    house_cred = ''
+    # first the houses
+    for h in credits["houses"]:
+        house_cred += "<div class='housecred'>\"" + h[3] + "\" by Flickr User " + h[2] + " " + license[str(h[1])] 
+        house_cred += "<br/><u>" + h[4] + "</u></div>"
+        
+    house_credit_content = [
+        ("credits_header","<h2>Credits</h2>"),
+        ("credits_content","<h3>Houses</h3>" + house_cred.encode('utf-8')),
+        ("page_number",str(int(page_number) - 5))
+    ]
+    tpl("templates/credits.html","pages/" + str(int(page_number) + 3).zfill(5) + ".html",house_credit_content)
+    
+    
+    # then the noun icons in pages with two 25-item columns
+    # each is a tuple of an id and a attribution line
+    nounlist = credits['nouns']
+    chunked = [nounlist[i:i + 50] for i in xrange(0,len(nounlist),50)]
+    
+    for chunk in range(len(chunked)):
+        chunk_counter = 1
+        chunk_string = ''
+        for noun in chunked[chunk]:
+            noun_string = "<div class='noun-credit'><img src='../images/" + noun[0].encode('utf-8') + ".png' /><span> " + noun[1].encode('utf-8') + "</span></div>"
+            chunk_string += noun_string
+            
+        this_header = "<h3>Icons</h3>"
+        if (chunk >= 1):
+            this_header = "<h3>Icons (continued)</h3>"
+            
+        tpl("templates/credits.html","pages/" + str(int(page_number) + chunk + 4).zfill(5) + ".html",[("credits_header",this_header),("credits_content",chunk_string),("page_number",str(int(page_number) + chunk - 2))])
+        
+    # finally all the concepts
+    contributors = {}
+    for c in credits['concepts']:
+        for contributor in c:
+            contributors[contributor] = ' '
+            
+    con_string = ", ".join(contributors.keys())
+    
+    tpl("templates/credits.html","pages/" + str(int(page_number) + chunk + 5).zfill(5) + ".html",[("page_number",str(int(page_number) - 1)),("credits_header","<h3>Concepts</h3>"),("credits_content","<p>" + con_string + "</p>")])
+    
+def chunk(thelist,size):
+    nouncredits = {}
+    for n in thenouns:
+        nouncredits[n[0]] = n[1]
+    for i in range(0, len(thelist),50):
+        yield l[i:i + n] 
+
+def make_pdf():
+    print "Making PDF "
+    pages = glob.glob("pages/*.html")
+    
+    print "Converting individal pages "
+    
+    for p in pages:
+            
+        pn = p.split("/")[-1].split(".")[0]
+        nf = "pdfs/"+ pn.zfill(5) + ".pdf"
+        
+        HTML(p).write_pdf(nf)
+    
+    print "Combining them all "
+    
+    os.system("pdftk pdfs/*.pdf cat output preview.pdf")
+    
+    print "I think it's done!"
+    
+assemble()
+make_pdf()

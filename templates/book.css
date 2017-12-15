@@ -3,12 +3,23 @@ body {
  	color: #333;
  	margin:0;
  }
+
+html {
+	padding:0;
+	margin:0;
+}
+
+@page {
+  margin: 0;
+  width: 8.5in;
+  height: 8.5in;
+}
  .pg {
- 	width: 8.5in;
- 	height: 8.5in;
+ 	width: 8.25in;
+ 	height: 8.25in;
  
- 	font-size:14pt;
- 	border: 8px solid navy;
+ 	font-size:13.8pt;
+ 	border: .125in solid navy;
  	color: #333;
  }
 
@@ -42,7 +53,7 @@ body {
  	position: absolute;
  	top: 7.75in;
  	left: .75in;
- 	font-family: Arial;
+ 	font-family: Helvetica;
  }
 
   .pg {
@@ -139,9 +150,8 @@ h1#book-title {
 .frontcover h2 {
 	text-align:center;
 	font-size: 95%;
-	margin-top: 2.4in;
+	margin-top: 1in;
 	position: absolute;
-	bottom:1.5in;
 	width:7.25in;
 }
 
@@ -156,7 +166,56 @@ body.toc .page-content {
 
 .toc-entry {
 	margin: 1em auto;
+	width: 5in;
+	font-size:12pt;
+	line-height: 1.2;
+	margin-bottom:1.4em;
 }
+
 .toc-entry span {
 	display: block;
+}
+.toc-entry span:first-child {
+	font-style: italic;
+}
+.credits .pg {
+	border-color:#333;
+	font-size: 12pt;
+}
+
+.credits h2 {
+	margin-top: 0;
+}
+.credits .text-content {
+	margin-left: 0;
+	text-align:left;
+	width:100%;
+}
+.noun-credit img {
+	height:.16in;
+
+}
+
+.noun-credit {
+	float:left;
+	width: 3in;
+    font-size: 8pt;
+    padding-right: 0.5in;
+}
+.credits .pn {
+	clear:both;
+	text-align:center;
+	padding-top: 1em;
+	position:absolute;
+	width:7in;
+	bottom: 1in;
+	font-family:Helvetica;
+}
+
+.toc-entry span:nth-child(2) {
+    text-align: left;
+}
+.toc-entry span:nth-child(3) {
+    text-align: right;
+    margin-top: -1.2em;
 }
