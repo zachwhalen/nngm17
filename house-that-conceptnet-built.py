@@ -548,7 +548,7 @@ def assemble():
         result = 0
         while (result == 0):
             animal = random.randrange(0,len(animals))
-            result = stack(animals[animal], 5)
+            result = stack(animals[animal], 55)
             del animals[animal]
             
         
