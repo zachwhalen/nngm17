@@ -27,7 +27,8 @@ credits = {
         'concepts':[],
         'raw_txt':'',
         'chapter_count':2,
-        'chapter_titles':[]
+        'chapter_titles':[],
+        'character_icons':[]
     }
 
 def contrib(sources):
@@ -440,6 +441,8 @@ def prepare_chapter(content,startpage,chapter_number):
     jack_icon_first = get_icon(jack,random.choice(colors),random.choice(["man","girl","boy","woman","baby","child","grandmother","dude"]))
     
     jack_icon = re.sub(r"style=\".+?\"","",jack_icon_first)
+
+    credits["character_icons"].append(jack_icon_first)
     
     # chapter object 
     chapter_object = content[0]
@@ -535,7 +538,8 @@ def assemble():
         'concepts':[],
         'raw_txt':'',
         'chapter_count':7,
-        'chapter_titles':[]
+        'chapter_titles':[],
+        'character_icons':[]
     }
     
 
@@ -586,7 +590,12 @@ def assemble():
     tpl("templates/titlepage.html","pages/00003r.html",[("book_title",booktitle)])
     
     # dedication page
-    tpl("templates/dedication.html","pages/00004l.html",[("","")])
+    kid_icons = '<div id="kids">'
+    for kid in ["Cecily","Daniel","Serena","Wendy"]:
+        a_kid = re.sub(r"style=\".+?\"","",get_icon(kid,"333333"))
+        kid_icons += a_kid
+    kid_icons += "</div>"
+    tpl("templates/dedication.html","pages/00004l.html",[("kids",kid_icons)])
     
     # toc -- this one has to be a bit more manual
     toc = ''
@@ -609,7 +618,7 @@ def assemble():
     # make a The End
     tpl("templates/last_page.html","pages/" + str(int(page_counter) + 2).zfill(5) + ".html",[("character_names", ", ".join(list(credits['characters'])))]) 
     
-    tpl("templates/the_end.html","pages/" + str(int(page_counter) + 3).zfill(5) + ".html",[("","")])
+    tpl("templates/the_end.html","pages/" + str(int(page_counter) + 3).zfill(5) + ".html",[("character_icons"," ".join(list(credits['character_icons'])))])
 
     # make the credits
     make_credits(credits,str(int(page_counter) + 2))

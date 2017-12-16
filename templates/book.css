@@ -227,3 +227,12 @@ h1.the-end {
 	margin-top:2in;
 	font-size:1in;
 }
+#kids {
+	width: 5in;
+	margin: 0 auto;
+	padding-top: .5in;
+}
+#kids img {
+	width: 1.2in;
+	float:left;
+}
