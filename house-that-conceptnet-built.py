@@ -174,7 +174,7 @@ def stack(seed,depth):
                     if (not re.match("be",lemma(w[0]))):
                         pos.append(w[1]) 
                 
-                if (re.match(blob.tags[-1][1],"NN") and "VB" in pos):
+                if (re.match(blob.tags[-1][1],"NN") and "VB" in pos and "to" not in blob.tags[0][0]):
                     # print "Adding " + act
                     db.append([act]) 
             #print db
@@ -202,7 +202,7 @@ def stack(seed,depth):
                             if (not re.match("be",lemma(w[0]))):
                                 pos.append(w[1])
 
-                        if (re.match(blob.tags[-1][1],"NN") and "VB" in pos and act not in db[s]):
+                        if (re.match(blob.tags[-1][1],"NN") and "VB" in pos and act not in db[s] and "to" not in blob.tags[0][0]):
                             # add it
                             #print "A new tail action: " + act
                             new_tails.append(act)
@@ -380,7 +380,7 @@ def get_icon(keyword,color,fallback="thing"):
             if (not os.path.isfile("images/" + icon['id'] + ".png")):
                 # save it
                 get = os.system("wget -P images/ -O images/" + icon['id'] + ".png " + icon_url)
-
+                #print "get = " + get
                 # crop it
                 img = Image.open("images/" + icon['id'] + ".png")
                 t = img.crop((0,0,700,600))
@@ -392,7 +392,7 @@ def get_icon(keyword,color,fallback="thing"):
             if (not os.path.isfile(color_fn)):
                 # convert 8668.png -fuzz 100% -fill "#e68900" -opaque black test.png
                 print "coloring the icon "
-                os.system("convert images/" + icon['id'] + ".png " + "-fuzz 100% -fill \"#" + color + "\" -opaque black " + color_fn)
+                os.system("convert images/" + icon['id'] + ".png " + "-fuzz 90% -fill \"#" + color + "\" -opaque black " + color_fn)
     
     top = "%.1f" % random.uniform(-0.5,7.0)
     left = "%.1f" % random.uniform(-0.5,7.0)
@@ -407,7 +407,7 @@ def a(phrase):
     if (re.search(r" the [aeiou]",phrase)):
         new_phrase = phrase.replace(" the ", " an ").replace(" for an "," for ")
     else:
-        new_phrase = phrase.replace(" the ", " a ").replace(" for a "," for ").replace(" a water"," water")
+        new_phrase = phrase.replace(" the ", " a ").replace(" for a "," for ").replace(" a water"," water").replace(" a sun"," the sun")
         
     return new_phrase
 
@@ -437,7 +437,9 @@ def prepare_chapter(content,startpage,chapter_number):
     credits['characters'].append(jack)
     
     # get an image for this character
-    jack_icon = get_icon(jack,random.choice(colors),random.choice(["man","girl","boy","woman","baby","child","grandmother","dude"]))
+    jack_icon_first = get_icon(jack,random.choice(colors),random.choice(["man","girl","boy","woman","baby","child","grandmother","dude"]))
+    
+    jack_icon = re.sub(r"style=\".+?\"","",jack_icon_first)
     
     # chapter object 
     chapter_object = content[0]
@@ -475,8 +477,9 @@ def prepare_chapter(content,startpage,chapter_number):
         the_thing = the_concept.split(" the ")[-1]
         
         # find an icon. This returns an <img> tag for the icon
-        the_icon = get_icon(the_thing,color)
-            
+        the_icon_first = get_icon(the_thing,color)
+        the_icon = re.sub(r"style=\".+?\"","",the_icon_first)
+        
         if (page == 0): # at the beginning of the chapter
             
             
@@ -510,9 +513,9 @@ def prepare_chapter(content,startpage,chapter_number):
             if (not os.path.isfile("images/house-" + str(chapter_number) + "-watercolor.jpg")):
                 get_flickr_image("house",chapter_number)
                 
-            tpl("templates/rtemplate.html","pages/" + str(int(page_number) + 1).zfill(5) + "r.html",[("imagery",jack_icon + "<!-- imagery -->"),("pgbackground","<div class='pg' style='background-image: url(../images/house-" + str(chapter_number) + "-watercolor.jpg)'>")])
+            tpl("templates/rtemplate.html","pages/" + str(int(page_number) + 1).zfill(5) + "r.html",[("imagery",jack_icon_first + "<!-- imagery -->"),("pgbackground","<div class='pg' style='background-image: url(../images/house-" + str(chapter_number) + "-watercolor.jpg)'>")])
         elif (page >= 1):
-            tpl ("pages/" + str(int(page_number) - 1).zfill(5) + "r.html",  "pages/" + str(int(page_number) + 1).zfill(5) + "r.html",[("imagery",the_icon + "<!-- imagery -->")])
+            tpl ("pages/" + str(int(page_number) - 1).zfill(5) + "r.html",  "pages/" + str(int(page_number) + 1).zfill(5) + "r.html",[("imagery",the_icon_first + "<!-- imagery -->")])
         
         # prepend the next_concept variable to the chapter text before it loops again
         chapter = "<span class='page-object' style='color:#" + color + "'>" + the_thing + "</span>" + next_concept + chapter
@@ -683,9 +686,10 @@ def make_pdf():
     
     print "Combining them all "
     
-    os.system("pdftk pdfs/*.pdf cat output preview.pdf")
+    os.system("pdftk pdfs/*.pdf cat output output.pdf")
     
     print "I think it's done!"
     
 assemble()
 make_pdf()
+#get_icon("water","red")
