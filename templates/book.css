@@ -166,7 +166,7 @@ body.toc .page-content {
 
 .toc-entry {
 	margin: 1em auto;
-	width: 5in;
+	width: 5.5in;
 	font-size:12pt;
 	line-height: 1.2;
 	margin-bottom:1.4em;
@@ -221,4 +221,9 @@ body.toc .page-content {
 }
 .housecred {
 	margin: 1em auto;
+}
+
+h1.the-end {
+	margin-top:2in;
+	font-size:1in;
 }

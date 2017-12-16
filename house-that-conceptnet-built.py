@@ -174,7 +174,7 @@ def stack(seed,depth):
                     if (not re.match("be",lemma(w[0]))):
                         pos.append(w[1]) 
                 
-                if (re.match(blob.tags[-1][1],"NN") and "VB" in pos and "to" not in blob.tags[0][0]):
+                if (re.match(blob.tags[-1][1],"NN") and "VB" in pos and act[0].split(" ")[0] not in ['to','near'] ):
                     # print "Adding " + act
                     db.append([act]) 
             #print db
@@ -202,7 +202,7 @@ def stack(seed,depth):
                             if (not re.match("be",lemma(w[0]))):
                                 pos.append(w[1])
 
-                        if (re.match(blob.tags[-1][1],"NN") and "VB" in pos and act not in db[s] and "to" not in blob.tags[0][0]):
+                        if (re.match(blob.tags[-1][1],"NN") and "VB" in pos and act not in db[s] and act[0].split(" ")[0] not in ['to','near'] ):
                             # add it
                             #print "A new tail action: " + act
                             new_tails.append(act)
@@ -494,7 +494,7 @@ def prepare_chapter(content,startpage,chapter_number):
 
             next_concept = ""
             # start the chapter string
-            chapter = "that " + jack + " " + random.choice(["built.","built of brick.","divided into several rooms.","found in a neighborhood.","located on an estate."])
+            chapter = "that " + jack + " " + random.choice(["built.","built.","built.","built.","built.","built.","built.","built of brick.","divided into several rooms.","found in a neighborhood.","located on an estate."])
         else:
             # I don't know why this is going backwards?
             next_concept = "<span> that " + pastify(specify(ordered[page - 1][0])).split(" the ")[0] + " the </span>"
@@ -543,11 +543,12 @@ def assemble():
     # first, make the chapters
     animals = pycorpora.get_file("animals","common")['animals']
     
+    
     for chapter_counter in range(credits['chapter_count']):
         result = 0
         while (result == 0):
             animal = random.randrange(0,len(animals))
-            result = stack(animals[animal], 55)
+            result = stack(animals[animal], 5)
             del animals[animal]
             
         
@@ -605,8 +606,13 @@ def assemble():
     
     tpl("templates/preface.html","pages/00007r.html",[("house_count",housecount),("people_count",peoplecount),("character_names", ", ".join(list(credits['characters']))),("word_count",str(len(re.compile(r" +").split(credits['raw_txt']))))])
     
+    # make a The End
+    tpl("templates/last_page.html","pages/" + str(int(page_counter) + 2).zfill(5) + ".html",[("character_names", ", ".join(list(credits['characters'])))]) 
+    
+    tpl("templates/the_end.html","pages/" + str(int(page_counter) + 3).zfill(5) + ".html",[("","")])
+
     # make the credits
-    make_credits(credits,page_counter)
+    make_credits(credits,str(int(page_counter) + 2))
     
     print "Generation complete"
 
