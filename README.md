@@ -25,9 +25,13 @@ And you'll need these directories for all of the page and pdf generation:
  - `images/`
  - `pdfs/`
 
+Finally, this uses Fred Weinhaus's ["watercolor"](http://www.fmwconcepts.com/imagemagick/watercolor/index.php) script for ImageMagick to make the illustrations. Put this in the same directory as the Python script.
+
 ## Samples 
 
-The [Smaller Sample](https://github.com/zachwhalen/nngm17/blob/master/output-smaller-sample.pdf) is seven chapters with 5 concepts each. It's about 15mb after optimizing it in Adobe Acrobat. 
+The [Smaller Sample](https://github.com/zachwhalen/nngm17/blob/master/output-smaller-sample.pdf) is 7 chapters with 5 concepts each. It's about 15mb after optimizing it in Adobe Acrobat. 
+
+The Complete Version, titled [<cite>The several houses of Brian, Spencer, Liam, Victoria, Brayden, Vincent, and Alex</cite>](https://github.com/zachwhalen/nngm17/blob/master/output-optimized.pdf) is 7 chapters with 55 concepts each. It's 800 pages long, but only 23mb after optimization. I generated this on Saturday, December 16 2017, and it took about 1 hour to complete. The main text comes to 49,799, but that doesn't count the chapter titles, front matter, or end credits, so I'm sure it's over 50K all together.
 
 ## Screenshots
 
