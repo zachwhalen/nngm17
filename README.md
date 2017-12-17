@@ -29,4 +29,15 @@ And you'll need these directories for all of the page and pdf generation:
 
 The [Smaller Sample](https://github.com/zachwhalen/nngm17/blob/master/output-smaller-sample.pdf) is seven chapters with 5 concepts each. It's about 15mb after optimizing it in Adobe Acrobat. 
 
+## Screenshots
+
+Here are some screenshots. 
+
+<img src="screenshots/1.png" />
+<img src="screenshots/2.png" />
+<img src="screenshots/3.png" />
+<img src="screenshots/4.png" />
+<img src="screenshots/5.png" />
+<img src="screenshots/6.png" />
+
 
